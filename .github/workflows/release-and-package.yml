@@ -1,0 +1,138 @@
+name: Build, Release ISO & Publish GHCR Package
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DISTRO_SLUG: kestrel-linux
+  DISTRO_VERSION: "1.0.0"
+  DISTRO_CODENAME: Peregrine
+  ARCH: x86_64
+
+jobs:
+  verify-and-build-distro:
+    name: Build Bootable ISO, RootFS & Publish Release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Kestrel Linux Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for Core Verification Tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies & Run Unit Tests
+        run: |
+          npm install --no-audit --no-fund
+          npx --yes tsx --test src/utils/distroCore.test.ts
+
+      - name: Install ISO & Initramfs Build Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            busybox-static \
+            cpio \
+            curl \
+            grub-pc-bin \
+            grub-efi-amd64-bin \
+            mtools \
+            xorriso \
+            zstd \
+            ca-certificates
+
+      - name: Build Bootable ISO, RootFS Tarball & kpkg Bundle
+        run: |
+          chmod +x ./build-iso.sh ./rootfs/init ./rootfs/bin/kpkg
+          ./build-iso.sh
+          ls -lh out/
+
+      - name: Upload Build Artifacts to Workflow Run
+        uses: actions/upload-artifact@v4
+        with:
+          name: kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}-artifacts
+          path: |
+            out/*.iso
+            out/*.tar.gz
+            out/SHA256SUMS
+
+      - name: Publish GitHub Release (v1.0.0)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.DISTRO_VERSION }}
+          name: "Kestrel Linux v${{ env.DISTRO_VERSION }} (${{ env.DISTRO_CODENAME }})"
+          body: |
+            ## Kestrel Linux v${{ env.DISTRO_VERSION }} ("${{ env.DISTRO_CODENAME }}") — Official Release
+
+            Featherweight, static-first Linux distribution built on Linux LTS, `musl` libc, and BusyBox.
+
+            ### Included Release Assets
+            - **`kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}.iso`**: Bootable hybrid BIOS/UEFI Live ISO image (boot with QEMU, VirtualBox, or bare-metal USB).
+            - **`kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}-rootfs.tar.gz`**: Minimal root filesystem archive (`initramfs` & OCI container base).
+            - **`kestrel-linux-${{ env.DISTRO_VERSION }}-kpkg-repo.tar.gz`**: Official `kpkg` core package index and metadata bundle.
+            - **`SHA256SUMS`**: Cryptographic SHA-256 verification checksums.
+
+            ### Quick Boot in QEMU
+            ```bash
+            qemu-system-x86_64 -cdrom kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}.iso -m 512M -serial stdio
+            ```
+
+            ### Pull Official Container Package (`ghcr.io`)
+            ```bash
+            docker pull ghcr.io/${{ github.repository_owner }}/kestrel-linux:latest
+            docker run --rm -it ghcr.io/${{ github.repository_owner }}/kestrel-linux:latest
+            ```
+          files: |
+            out/kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}.iso
+            out/kestrel-linux-${{ env.DISTRO_VERSION }}-${{ env.ARCH }}-rootfs.tar.gz
+            out/kestrel-linux-${{ env.DISTRO_VERSION }}-kpkg-repo.tar.gz
+            out/SHA256SUMS
+          draft: false
+          prerelease: false
+
+  publish-ghcr-package:
+    name: Build & Push OCI Package to GitHub Packages (GHCR)
+    runs-on: ubuntu-24.04
+    needs: verify-and-build-distro
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Lowercase Repository Owner for GHCR
+        id: owner
+        run: |
+          echo "lc_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry (ghcr.io)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Kestrel Linux Container Package
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner.outputs.lc_owner }}/kestrel-linux:latest
+            ghcr.io/${{ steps.owner.outputs.lc_owner }}/kestrel-linux:${{ env.DISTRO_VERSION }}
+          labels: |
+            org.opencontainers.image.title=Kestrel Linux
+            org.opencontainers.image.description=Featherweight, static-first Linux distribution built on Linux LTS, musl libc, and BusyBox
+            org.opencontainers.image.version=${{ env.DISTRO_VERSION }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT

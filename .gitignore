@@ -1,8 +1,24 @@
+# Dependencies & Web Build
 node_modules/
-build/
 dist/
 coverage/
+
+# AI Studio & Browser Verification Artifacts (never push to GitHub)
+.aistudio/
+.playwright-cli/
+public/assets/aistudio/
+
+# Distro ISO & RootFS Build Outputs
+build/
+out/
+*.iso
+*.img
+*.cpio.gz
+*.cpio.zst
+
+# Environment & OS
 .DS_Store
 *.log
 .env*
 !.env.example
+

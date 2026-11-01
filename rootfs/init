@@ -1,0 +1,32 @@
+#!/bin/sh
+# ==============================================================================
+# Kestrel Linux v1.0.0 ("Peregrine") — PID 1 /init
+# Architecture: x86_64 | Init: busybox-init | Libc: musl
+# ==============================================================================
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export HOME=/home/root
+export TERM=linux
+
+mount -t proc proc /proc 2>/dev/null || true
+mount -t sysfs sysfs /sys 2>/dev/null || true
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
+mkdir -p /dev/pts /run /tmp /var/log
+mount -t devpts devpts /dev/pts 2>/dev/null || true
+
+if [ -f /etc/hostname ]; then
+  hostname -F /etc/hostname 2>/dev/null || true
+fi
+
+if [ -f /etc/motd ]; then
+  cat /etc/motd
+fi
+
+# Configure loopback & DHCP if eth0 is present
+ip link set lo up 2>/dev/null || true
+if [ -d /sys/class/net/eth0 ]; then
+  ip link set eth0 up 2>/dev/null || true
+  udhcpc -i eth0 -b -q 2>/dev/null &
+fi
+
+exec /bin/sh -l

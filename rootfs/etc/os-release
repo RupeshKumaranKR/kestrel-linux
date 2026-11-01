@@ -1,0 +1,12 @@
+NAME="Kestrel Linux"
+ID=kestrel
+ID_LIKE="kestrel alpine"
+PRETTY_NAME="Kestrel Linux 1.0.0 (Peregrine)"
+VERSION="1.0.0"
+VERSION_ID="1.0.0"
+VERSION_CODENAME="peregrine"
+HOME_URL="https://github.com/RupeshKumaranKR/kestrel-linux"
+BUG_REPORT_URL="https://github.com/RupeshKumaranKR/kestrel-linux/issues"
+KESTREL_LIBC="musl"
+KESTREL_INIT="busybox-init"
+KESTREL_ARCH="x86_64"

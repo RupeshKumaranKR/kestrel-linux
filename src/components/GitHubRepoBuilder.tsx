@@ -278,7 +278,7 @@ export const GitHubRepoBuilder: React.FC<GitHubRepoBuilderProps> = ({
           </div>
         </div>
 
-        {/* Right 5 Columns: One-Click GitHub Push & Self-Extracting Bundle */}
+        {/* Right 5 Columns: One-Click GitHub Push & Release/Package Status */}
         <div className="lg:col-span-5 flex flex-col justify-between border border-slate-800 rounded-lg bg-slate-900/40 p-5 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -286,14 +286,14 @@ export const GitHubRepoBuilder: React.FC<GitHubRepoBuilderProps> = ({
                 github.com/{config.githubUser}/{config.slug}
               </div>
               <div className="text-xs text-slate-400 font-mono tabular-nums">
-                ISO: {metrics.isoSizeMb} MiB
+                Release v{config.version} · GHCR
               </div>
             </div>
             <h3 className="text-base font-semibold text-white">
-              Push Your Linux Distro to GitHub in 30 Seconds
+              Ready for Direct GitHub Push (Releases + GHCR Packages)
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Download the self-extracting repository generator script below, run it locally to create all 7 build &amp; CI files, and push to GitHub. GitHub Actions will automatically compile your bootable <code className="text-sky-400">{config.slug}-{config.version}-{config.arch}.iso</code>.
+              All distribution files (<code className="text-sky-400">README.md</code>, <code className="text-sky-400">rootfs/</code>, <code className="text-sky-400">build-iso.sh</code>, <code className="text-sky-400">Dockerfile</code>, and <code className="text-sky-400">.github/workflows/release-and-package.yml</code>) are staged in the workspace root, and <code className="text-sky-400">.aistudio/</code> is purged and ignored. Pushing to GitHub automatically triggers Actions to publish <strong>Release v{config.version}</strong> and <strong>Package ghcr.io/{config.githubUser.toLowerCase()}/{config.slug}</strong>.
             </p>
 
             <pre className="p-3 rounded bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-300 whitespace-pre-wrap break-all leading-5">

@@ -1,0 +1,6 @@
+# /etc/inittab — BusyBox init configuration for Kestrel Linux
+::sysinit:/init
+::respawn:-/bin/sh
+tty2::askfirst:-/bin/sh
+::ctrlaltdel:/sbin/reboot
+::shutdown:/bin/umount -a -r

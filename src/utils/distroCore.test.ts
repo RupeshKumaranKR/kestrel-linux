@@ -67,10 +67,17 @@ test('generateRepoFiles and generateSelfExtractingBundle reflect custom distro c
     githubUser: 'linuxmaker',
   };
   const files = generateRepoFiles(customConfig, INITIAL_PACKAGES);
-  assert.equal(files.length, 7);
+  assert.equal(files.length, 8);
   const readme = files.find((f) => f.path === 'README.md');
-  assert.ok(readme?.content.includes('# Falcon OS (Talon)'));
+  assert.ok(readme?.content.includes('# Falcon OS (`Talon` v1.0.0)'));
   assert.ok(readme?.content.includes('https://github.com/linuxmaker/falcon-os.git'));
+
+  const workflow = files.find((f) => f.path === '.github/workflows/release-and-package.yml');
+  assert.ok(workflow?.content.includes('softprops/action-gh-release@v2'));
+  assert.ok(workflow?.content.includes('ghcr.io/linuxmaker/falcon-os:latest'));
+
+  const gitignore = files.find((f) => f.path === '.gitignore');
+  assert.ok(gitignore?.content.includes('.aistudio/'));
 
   const bundle = generateSelfExtractingBundle(customConfig, INITIAL_PACKAGES);
   assert.ok(bundle.includes('mkdir -p "falcon-os"'));

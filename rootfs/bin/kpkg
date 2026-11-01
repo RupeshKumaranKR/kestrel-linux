@@ -1,0 +1,48 @@
+#!/bin/sh
+# ==============================================================================
+# kpkg — Kestrel Linux Minimalist Package Manager (v1.0.0)
+# Manages packages indexed in /var/lib/kpkg/installed
+# ==============================================================================
+set -e
+
+DB_FILE="/var/lib/kpkg/installed"
+REPO_FILE="/etc/kpkg/repositories"
+
+cmd="${1:-help}"
+arg="${2:-}"
+
+case "$cmd" in
+  list)
+    echo "PACKAGE              VERSION      CATEGORY      STATUS"
+    echo "------------------------------------------------------------"
+    if [ -f "$DB_FILE" ]; then
+      cat "$DB_FILE"
+    else
+      echo "linux-lts-kestrel    6.12.8-r0    Core          installed"
+      echo "musl                 1.2.5-r1     Core          installed"
+      echo "busybox              1.37.0-r0    Core          installed"
+      echo "kpkg-tools           1.0.0-r0     Core          installed"
+    fi
+    ;;
+  search)
+    if [ -z "$arg" ]; then
+      echo "Usage: kpkg search <keyword>"
+      exit 1
+    fi
+    grep -i "$arg" "$DB_FILE" || echo "kpkg: no matching packages for '$arg'"
+    ;;
+  info)
+    if [ -z "$arg" ]; then
+      echo "Usage: kpkg info <package>"
+      exit 1
+    fi
+    grep -i "^$arg" "$DB_FILE" || echo "kpkg: package '$arg' not found"
+    ;;
+  repos)
+    cat "$REPO_FILE"
+    ;;
+  *)
+    echo "kpkg 1.0.0 — Kestrel Linux Package Manager"
+    echo "Usage: kpkg <list|search|info|repos> [package]"
+    ;;
+esac

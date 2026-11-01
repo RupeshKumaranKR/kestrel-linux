@@ -1,0 +1,13 @@
+linux-lts-kestrel    6.12.8-r0    Core          installed   11400KB  Compressed vmlinuz kernel with virtio, ext4, overlayfs
+musl                 1.2.5-r1     Core          installed     620KB  Lightweight C standard library for static/dynamic linking
+busybox              1.37.0-r0    Core          installed     980KB  Swiss army knife of embedded Linux (ash, coreutils, init)
+kpkg-tools           1.0.0-r0     Core          installed     310KB  Kestrel signed tar.zst package manager and verifier
+dropbear             2024.86-r0   Networking    installed     420KB  Small memory footprint SSH2 server and client
+curl                 8.11.1-r0    Networking    installed     740KB  Command line tool for transferring data over TLS
+git                  2.47.1-r0    Development   installed    6800KB  Distributed version control system
+nftables             1.1.1-r0     Security      installed     690KB  Netfilter packet filtering framework
+wireguard-tools      1.0.202409   Security      available     280KB  Next-generation kernel VPN tunnel utilities
+tmux                 3.5a-r0      System        available     890KB  Terminal multiplexer for persistent split sessions
+btop                 1.4.0-r0     System        available    1250KB  Resource monitor for CPU, memory, disks, and processes
+neovim               0.10.3-r0    Development   available    5400KB  Vim-based text editor built with LuaJIT
+gcc-musl-sdk         14.2.0-r0    Development   available   38500KB  Native C/C++ compiler and musl-dev headers
