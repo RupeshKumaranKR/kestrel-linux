@@ -293,7 +293,7 @@ export const GitHubRepoBuilder: React.FC<GitHubRepoBuilderProps> = ({
               Ready for Direct GitHub Push (Releases + GHCR Packages)
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              All distribution files (<code className="text-sky-400">README.md</code>, <code className="text-sky-400">rootfs/</code>, <code className="text-sky-400">build-iso.sh</code>, <code className="text-sky-400">Dockerfile</code>, and <code className="text-sky-400">.github/workflows/release-and-package.yml</code>) are staged in the workspace root, and <code className="text-sky-400">.aistudio/</code> is purged and ignored. Pushing to GitHub automatically triggers Actions to publish <strong>Release v{config.version}</strong> and <strong>Package ghcr.io/{config.githubUser.toLowerCase()}/{config.slug}</strong>.
+              All distribution files (<code className="text-sky-400">README.md</code>, <code className="text-sky-400">rootfs/</code>, <code className="text-sky-400">build-iso.sh</code>, <code className="text-sky-400">Dockerfile</code>, and <code className="text-sky-400">.github/workflows/release-and-package.yml</code>) are staged in the workspace root. Pushing to GitHub automatically triggers Actions to publish <strong>Release v{config.version}</strong> and <strong>Package ghcr.io/{config.githubUser.toLowerCase()}/{config.slug}</strong>.
             </p>
 
             <pre className="p-3 rounded bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-300 whitespace-pre-wrap break-all leading-5">

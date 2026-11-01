@@ -1112,10 +1112,13 @@ node_modules/
 dist/
 coverage/
 
-# AI Studio & Browser Verification Artifacts (never push to GitHub)
-.aistudio/
-.playwright-cli/
-public/assets/aistudio/
+# Local IDE & Cache Directories
+.[a-z]*
+!.gitignore
+!.github/
+!.npmrc
+!.env.example
+metadata.json
 
 # Distro ISO & RootFS Build Outputs
 build/
@@ -1129,7 +1132,6 @@ out/
 .DS_Store
 *.log
 .env*
-!.env.example
 `;
 
   return [

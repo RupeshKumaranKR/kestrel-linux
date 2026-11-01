@@ -77,7 +77,7 @@ test('generateRepoFiles and generateSelfExtractingBundle reflect custom distro c
   assert.ok(workflow?.content.includes('ghcr.io/linuxmaker/falcon-os:latest'));
 
   const gitignore = files.find((f) => f.path === '.gitignore');
-  assert.ok(gitignore?.content.includes('.aistudio/'));
+  assert.ok(gitignore?.content.includes('*.iso'));
 
   const bundle = generateSelfExtractingBundle(customConfig, INITIAL_PACKAGES);
   assert.ok(bundle.includes('mkdir -p "falcon-os"'));

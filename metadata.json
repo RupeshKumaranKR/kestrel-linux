@@ -1,6 +1,0 @@
-{
-  "name": "Kestrel Linux — Minimalist Distro & GitHub Builder",
-  "description": "An interactive minimalist Linux distribution live environment, virtual rootfs, package manager, and reproducible GitHub ISO build kit.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
