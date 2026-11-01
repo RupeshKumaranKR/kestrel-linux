@@ -31,9 +31,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Dependencies & Run Unit Tests
+      - name: Run Kestrel Core Unit Tests
         run: |
-          npm install --no-audit --no-fund
           npx --yes tsx --test src/utils/distroCore.test.ts
 
       - name: Install ISO & Initramfs Build Toolchain
@@ -43,6 +42,8 @@ jobs:
             busybox-static \
             cpio \
             curl \
+            grub-common \
+            grub2-common \
             grub-pc-bin \
             grub-efi-amd64-bin \
             mtools \
@@ -71,6 +72,8 @@ jobs:
         with:
           tag_name: v${{ env.DISTRO_VERSION }}
           name: "Kestrel Linux v${{ env.DISTRO_VERSION }} (${{ env.DISTRO_CODENAME }})"
+          overwrite_files: true
+          make_latest: "true"
           body: |
             ## Kestrel Linux v${{ env.DISTRO_VERSION }} ("${{ env.DISTRO_CODENAME }}") — Official Release
 

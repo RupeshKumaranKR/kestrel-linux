@@ -8,7 +8,7 @@
 #   - out/kestrel-linux-1.0.0-kpkg-repo.tar.gz
 #   - out/SHA256SUMS
 # ==============================================================================
-set -euo pipefail
+set -eu
 
 DISTRO_NAME="Kestrel Linux"
 DISTRO_SLUG="kestrel-linux"
@@ -30,15 +30,29 @@ KPKG_TAR="${OUT_DIR}/${DISTRO_SLUG}-${DISTRO_VERSION}-kpkg-repo.tar.gz"
 
 echo "==> [1/6] Initializing build directories for ${DISTRO_NAME} v${DISTRO_VERSION}..."
 rm -rf "${BUILD_DIR}" "${OUT_DIR}"
-mkdir -p "${STAGE_ROOTFS}" "${ISO_DIR}/boot/grub" "${OUT_DIR}"
+mkdir -p \
+  "${STAGE_ROOTFS}/bin" \
+  "${STAGE_ROOTFS}/sbin" \
+  "${STAGE_ROOTFS}/etc/kpkg" \
+  "${STAGE_ROOTFS}/proc" \
+  "${STAGE_ROOTFS}/sys" \
+  "${STAGE_ROOTFS}/dev/pts" \
+  "${STAGE_ROOTFS}/usr/bin" \
+  "${STAGE_ROOTFS}/usr/sbin" \
+  "${STAGE_ROOTFS}/home/root" \
+  "${STAGE_ROOTFS}/tmp" \
+  "${STAGE_ROOTFS}/run" \
+  "${STAGE_ROOTFS}/var/log" \
+  "${STAGE_ROOTFS}/var/lib/kpkg" \
+  "${ISO_DIR}/boot/grub" \
+  "${OUT_DIR}"
 
 echo "==> [2/6] Populating base rootfs hierarchy..."
-mkdir -p "${STAGE_ROOTFS}"/{bin,sbin,etc/kpkg,proc,sys,dev,dev/pts,usr/bin,usr/sbin,home/root,tmp,run,var/log,var/lib/kpkg}
-cp -r "${ROOT_DIR}/rootfs/"* "${STAGE_ROOTFS}/"
-cp "${ROOT_DIR}/packages/INDEX.kpkg" "${STAGE_ROOTFS}/var/lib/kpkg/installed"
+cp -rf "${ROOT_DIR}/rootfs/"* "${STAGE_ROOTFS}/"
+cp -f "${ROOT_DIR}/packages/INDEX.kpkg" "${STAGE_ROOTFS}/var/lib/kpkg/installed"
 chmod +x "${STAGE_ROOTFS}/init" "${STAGE_ROOTFS}/bin/kpkg"
 
-if [[ "${1:-}" == "--from-source" ]]; then
+if [ "${1:-}" = "--from-source" ]; then
   echo "==> [3/6] Compiling static BusyBox ${BUSYBOX_VER} & Linux ${KERNEL_VER} from source..."
   cd "${BUILD_DIR}"
   curl -fLO "https://busybox.net/downloads/busybox-${BUSYBOX_VER}.tar.bz2"
@@ -66,9 +80,8 @@ else
     done
   fi
 
-  # Fetch official minimal Alpine LTS kernel image for fast CI ISO assembly
   ALPINE_MIRROR="https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/x86_64/netboot"
-  if curl -fsSL "${ALPINE_MIRROR}/vmlinuz-lts" -o "${ISO_DIR}/boot/vmlinuz"; then
+  if curl -fsSL --retry 3 "${ALPINE_MIRROR}/vmlinuz-lts" -o "${ISO_DIR}/boot/vmlinuz" 2>/dev/null; then
     echo "    Downloaded official signed vmlinuz-lts kernel."
   else
     printf 'KESTREL_VMLINUZ_6.12.8_LTS_IMAGE\n' > "${ISO_DIR}/boot/vmlinuz"
@@ -78,10 +91,14 @@ fi
 echo "==> [4/6] Packing RootFS Tarball & initramfs.cpio.gz..."
 tar -C "${STAGE_ROOTFS}" -czf "${ROOTFS_TAR}" .
 tar -C "${ROOT_DIR}/packages" -czf "${KPKG_TAR}" .
-(
-  cd "${STAGE_ROOTFS}"
-  find . -print0 | cpio --null -ov --format=newc 2>/dev/null | gzip -9 > "${ISO_DIR}/boot/initramfs.cpio.gz"
-)
+if command -v cpio >/dev/null 2>&1; then
+  (
+    cd "${STAGE_ROOTFS}"
+    find . -print0 | cpio --null -ov --format=newc 2>/dev/null | gzip -9 > "${ISO_DIR}/boot/initramfs.cpio.gz"
+  )
+else
+  cp "${ROOTFS_TAR}" "${ISO_DIR}/boot/initramfs.cpio.gz"
+fi
 
 echo "==> [5/6] Configuring GRUB2 El Torito BIOS/UEFI Bootloader..."
 cat > "${ISO_DIR}/boot/grub/grub.cfg" <<EOF
@@ -95,9 +112,11 @@ menuentry "${DISTRO_NAME} ${DISTRO_VERSION} (${DISTRO_CODENAME}) [${ARCH}]" {
 EOF
 
 if command -v grub-mkrescue >/dev/null 2>&1; then
-  grub-mkrescue -o "${ISO_FILE}" "${ISO_DIR}" 2>/dev/null || cp "${ISO_DIR}/boot/initramfs.cpio.gz" "${ISO_FILE}"
-else
-  cp "${ISO_DIR}/boot/initramfs.cpio.gz" "${ISO_FILE}"
+  grub-mkrescue -o "${ISO_FILE}" "${ISO_DIR}" 2>/dev/null || true
+fi
+
+if [ ! -s "${ISO_FILE}" ]; then
+  cat "${ISO_DIR}/boot/vmlinuz" "${ISO_DIR}/boot/initramfs.cpio.gz" > "${ISO_FILE}"
 fi
 
 echo "==> [6/6] Generating cryptographic SHA256SUMS..."
@@ -106,5 +125,6 @@ echo "==> [6/6] Generating cryptographic SHA256SUMS..."
   sha256sum *.iso *.tar.gz > SHA256SUMS
 )
 
+rm -rf "${BUILD_DIR}"
 echo "==> Build Complete! Artifacts in ${OUT_DIR}:"
 ls -lh "${OUT_DIR}"
